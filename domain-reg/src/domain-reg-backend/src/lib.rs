@@ -29,7 +29,7 @@ fn config() -> ConfigResponse {
         pp = if state.purchase_price.is_some() {
             Some(state.purchase_price.unwrap())
         } else { pp };
-        tp = if state.purchase_price.is_some() {
+        tp = if state.transfer_price.is_some() {
             Some(state.transfer_price.unwrap())
         } else { tp };
     });
@@ -76,6 +76,7 @@ struct InitArgs {
     purchase_price: Option<Tokens>,
     transfer_price: Option<Tokens>,
     // treasury_account: Account,
+    records : Option<Vec<Record>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -90,10 +91,17 @@ fn init(args: InitArgs) {
 
     println!("arg.purchase_price : {:?}",args.purchase_price);
 
+    let pp = Some(Tokens::from_e8s(0));
+    let tp = Some(Tokens::from_e8s(0));
+
     STATE.with(|state| {
         let mut state = state.borrow_mut();
-        state.purchase_price = args.purchase_price;
-        state.transfer_price = args.transfer_price;
+        state.purchase_price = if args.purchase_price.is_some() {
+            Some(args.purchase_price.unwrap())
+        } else { pp };
+        state.transfer_price = if args.transfer_price.is_some() {
+            Some(args.transfer_price.unwrap())
+        } else { tp };
         // state.treasury_account = args.treasury_account;
         println!("state.purchase_price : {:?}",state.purchase_price);
     });
@@ -104,6 +112,7 @@ impl Default for InitArgs {
         InitArgs {
             purchase_price: Some(Tokens::from_e8s(0)),
             transfer_price: Some(Tokens::from_e8s(0)),
+            records : Some(Vec::new()),
         }
         // treasury_account: Account {
         //     owner: Principal::anonymous(), 

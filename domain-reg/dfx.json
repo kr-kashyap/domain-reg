@@ -3,8 +3,7 @@
     "domain-reg-backend": {
       "candid": "src/domain-reg-backend/domain-reg-backend.did",
       "package": "domain-reg-backend",
-      "type": "rust",
-      "init_arg": "( record { transfer_fee = opt record { e8s = 111 : nat64 }; purchase_fee = opt record { e8s = 11 : nat64 };}, )"
+      "type": "rust"
     }
   },
   "defaults": {

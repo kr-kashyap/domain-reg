@@ -1,11 +1,19 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
+
+use serde::Deserialize;
 
 #[allow(dead_code)]
 #[derive(CandidType)]
 pub struct ConfigResponse {
     pub purchase_price: Option<Tokens>,
     pub transfer_price: Option<Tokens>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct Record {
+    pub owner : Principal,
+    pub registered_name: String,
 }
 
 // We define a custom struct for each query response

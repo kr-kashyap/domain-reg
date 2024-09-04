@@ -47,11 +47,18 @@ type Account =
     subaccount : opt Subaccount;
   };
 
+type Record = 
+  record {
+    owner : principal;
+    registered_name : text;
+  };
+
 type InitArgs = 
   record {
     transfer_fee : opt ICPTs;
     purchase_fee : opt ICPTs;
-    // minting_account : Account;
+    // project_account : Account;
+    name_records : opt vec Record;
   };
 
 service : (InitArgs) -> {
