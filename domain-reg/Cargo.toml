@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/domain-reg-backend"
+]
+resolver = "2"

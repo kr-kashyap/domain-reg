@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "domain-reg-backend": {
+      "candid": "src/domain-reg-backend/domain-reg-backend.did",
+      "package": "domain-reg-backend",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
