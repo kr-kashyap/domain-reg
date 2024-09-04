@@ -1,3 +1,62 @@
-service : {
-    "greet": (text) -> (text) query;
+type ICPTs = 
+  record {
+     e8s : nat64;
+  };
+
+type ConfigResponse = 
+  record {
+    purchase_price: opt nat64;
+    transfer_price: opt nat64;
+  };
+
+type ResolveRecordResponse =
+  record {
+    address: opt text;
+  };
+
+type TransferReceipt = 
+  variant {
+    Err: TransferErr;
+    Ok: ResolveRecordResponse;
+  };
+
+type RegisterReceipt = 
+  variant {
+    Err: RegisterErr;
+    Ok: ResolveRecordResponse;
+  };
+
+type RegisterErr = 
+  variant {
+    NotAllowed;
+    InsufficientTokens;
+  };
+
+type TransferErr = 
+  variant {
+    NotAllowed;
+    NotExistingDomain;
+    InsufficientTokens;
+  };
+
+type Subaccount = blob;
+
+type Account = 
+  record {
+    owner : principal;
+    subaccount : opt Subaccount;
+  };
+
+type InitArgs = 
+  record {
+    transfer_fee : opt nat64;
+    purchase_fee : opt nat64;
+    // minting_account : Account;
+  };
+
+service : (InitArgs) -> {
+    "config": () -> (ConfigResponse) query;
+    "resolve_record": (text) -> (ResolveRecordResponse) query;
+    "register": (text) -> (RegisterReceipt);
+    "transfer": (text, text) -> (TransferReceipt);
 }
