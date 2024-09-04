@@ -4,8 +4,8 @@ use ic_ledger_types::Tokens;
 #[allow(dead_code)]
 #[derive(CandidType)]
 pub struct ConfigResponse {
-    pub purchase_price: Option<u64>,
-    pub transfer_price: Option<u64>,
+    pub purchase_price: Option<Tokens>,
+    pub transfer_price: Option<Tokens>,
 }
 
 // We define a custom struct for each query response

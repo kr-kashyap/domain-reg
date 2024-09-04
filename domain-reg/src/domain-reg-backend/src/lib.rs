@@ -1,6 +1,8 @@
 
-use ic_ledger_types::Subaccount;
-
+use ic_ledger_types::{Subaccount, Tokens};
+use ic_cdk::{
+    export_candid, println,
+};
 use candid::{CandidType, Principal};
 
 use std::cell::RefCell;
@@ -18,14 +20,20 @@ thread_local! {
 #[query]
 #[candid::candid_method(query)]
 fn config() -> ConfigResponse {
-    let mut pp = Some(0);
-    let mut tp = Some(0);
+    let mut pp = Some(Tokens::from_e8s(0));
+    let mut tp = Some(Tokens::from_e8s(0));
 
     STATE.with(|state| {
         let state = state.borrow();
-        pp = state.purchase_price;
-        tp = state.transfer_price;
+        println!("Config : state.purchase_price : {:?}",state.purchase_price);
+        pp = if state.purchase_price.is_some() {
+            Some(state.purchase_price.unwrap())
+        } else { pp };
+        tp = if state.purchase_price.is_some() {
+            Some(state.transfer_price.unwrap())
+        } else { tp };
     });
+    println!("pp : {:?}", pp);
     let config_response = ConfigResponse {
         purchase_price: pp,
         transfer_price: tp,
@@ -65,8 +73,8 @@ fn transfer(domain_name: String, new_name : String) -> TransferReceipt {
 
 #[derive(CandidType, Deserialize)]
 struct InitArgs {
-    purchase_price: Option<u64>,
-    transfer_price: Option<u64>,
+    purchase_price: Option<Tokens>,
+    transfer_price: Option<Tokens>,
     // treasury_account: Account,
 }
 
@@ -80,19 +88,22 @@ pub struct Account {
 fn init(args: InitArgs) {
     ic_cdk::setup();
 
+    println!("arg.purchase_price : {:?}",args.purchase_price);
+
     STATE.with(|state| {
         let mut state = state.borrow_mut();
         state.purchase_price = args.purchase_price;
         state.transfer_price = args.transfer_price;
         // state.treasury_account = args.treasury_account;
+        println!("state.purchase_price : {:?}",state.purchase_price);
     });
 }
 
 impl Default for InitArgs {
     fn default() -> Self {
         InitArgs {
-            purchase_price: Some(0),
-            transfer_price: Some(0),
+            purchase_price: Some(Tokens::from_e8s(0)),
+            transfer_price: Some(Tokens::from_e8s(0)),
         }
         // treasury_account: Account {
         //     owner: Principal::anonymous(), 

@@ -5,8 +5,8 @@ type ICPTs =
 
 type ConfigResponse = 
   record {
-    purchase_price: opt nat64;
-    transfer_price: opt nat64;
+    purchase_price: opt ICPTs;
+    transfer_price: opt ICPTs;
   };
 
 type ResolveRecordResponse =
@@ -49,8 +49,8 @@ type Account =
 
 type InitArgs = 
   record {
-    transfer_fee : opt nat64;
-    purchase_fee : opt nat64;
+    transfer_fee : opt ICPTs;
+    purchase_fee : opt ICPTs;
     // minting_account : Account;
   };
 
