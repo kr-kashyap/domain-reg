@@ -10,7 +10,7 @@ pub struct ConfigResponse {
     pub transfer_price: Option<Tokens>,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Hash, Eq, PartialEq, Debug, Clone)]
 pub struct Record {
     pub owner : Principal,
     pub registered_name: String,
@@ -50,6 +50,7 @@ pub enum TransferErr {
     NotAllowed,
     NotExistingDomain,
     InsufficientTokens,
+    None,
 }
 
 ic_cdk::export_candid!();

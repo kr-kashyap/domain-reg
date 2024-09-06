@@ -3,7 +3,8 @@ use ic_ledger_types::{Subaccount, Tokens};
 use ic_cdk::{println, caller};
 use candid::{CandidType, Principal};
 
-use std::cell::RefCell;
+use std::{borrow::Borrow, cell::RefCell};
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 
 mod types;
@@ -80,22 +81,73 @@ fn register(domain_name : String) -> RegisterReceipt {
 }
 
 // Function to push a new record into Option<Vec<Record>>
-fn push_to_option_vec(records: &mut Option<Vec<Record>>, new_record: Record) {
-    match records {
-        // If the Option is Some, push the new record to the existing Vec
-        Some(vec) => vec.push(new_record),
-        // If the Option is None, create a new Vec with the new record
-        None => *records = Some(vec![new_record]),
+fn push_to_option_vec(records: &mut Option<HashSet<Record>>, new_record: Record) {
+    // match records {
+    //     // If the Option is Some, push the new record to the existing Vec
+    //     Some(vec) => vec.insert(new_record),
+    //     // If the Option is None, create a new Vec with the new record
+    //     None => println!("")
+    //     // {
+    //     //     println!("None"),
+    //     //     let mut new_set = HashSet::new();
+    //     //     new_set.insert(new_record);
+    //     //     *records = Some(new_set);
+    //     // }
+    // }
+
+    // Insert the new record into the HashSet inside the Option if it exists
+    if let Some(ref mut set) = records {
+        set.insert(new_record);
+        println!("Record inserted successfully.");
+    } else {
+        let mut new_set = HashSet::new();
+        new_set.insert(new_record);
+        *records = Some(new_set);
+        println!("No HashSet found inside the Option.");
     }
 }
 
 #[update]
 #[candid::candid_method]
 fn transfer(domain_name: String, new_owner : Principal) -> TransferReceipt {
+    let mut err = TransferErr::None;
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        println!("{:?}", state.records);
+        // Find the record, check the owner, and update if conditions are met
+        if let Some(ref mut set) = state.records {
+        // Find the record that matches the name and clone it
+            if let Some(record) = set.iter().find(|record| record.registered_name == domain_name).cloned() {
+                // Check if the current owner matches the expected owner
+                if record.owner == caller() {
+                    // Remove the existing record
+                    set.take(&record);
+                    // Update the owner field
+                    let mut updated_record = record;
+                    updated_record.owner = new_owner;
+                    // Reinsert the updated record back into the HashSet
+                    set.insert(updated_record);
+                    println!("Record updated successfully.");
+                } else {
+                    err = TransferErr::NotAllowed;
+                    println!("Current owner does not match; transfer not performed.");
+                }
+            } else {
+                println!("Record not found.");
+            }
+        }
+        println!("{:?}", state.records);
+    });
+    // Print the updated Option<HashSet<Record, RandomState>>
     let resolve_record_response = ResolveRecordResponse {
-        address: Some(caller().to_string()),
+        address: Some(new_owner.to_string()),
     };
-    TransferReceipt::Ok(resolve_record_response)
+    match err {
+        TransferErr::None =>  TransferReceipt::Ok(resolve_record_response),
+        TransferErr::NotAllowed => TransferReceipt::Err(TransferErr::NotAllowed),
+        TransferErr::InsufficientTokens => TransferReceipt::Err(TransferErr::InsufficientTokens),
+        TransferErr::NotExistingDomain => TransferReceipt::Err(TransferErr::NotExistingDomain)
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -103,7 +155,7 @@ struct InitArgs {
     purchase_price: Option<Tokens>,
     transfer_price: Option<Tokens>,
     // treasury_account: Account,
-    records : Option<Vec<Record>>,
+    records : Option<HashSet<Record>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -122,7 +174,6 @@ fn init(args: InitArgs) {
     let tp = Some(Tokens::from_e8s(0));
 
     STATE.with(|state| {
-        let default_record = Some(vec![Record { owner : Principal::anonymous(), registered_name : String::from("")}]);
         let mut state = state.borrow_mut();
         state.purchase_price = if args.purchase_price.is_some() {
             Some(args.purchase_price.unwrap())
@@ -133,18 +184,17 @@ fn init(args: InitArgs) {
         // state.treasury_account = args.treasury_account;
         state.records = if args.records.is_some() {
             Some(args.records.unwrap())
-        } else {  default_record };
+    } else {  None };
         println!("state.purchase_price : {:?}",state.purchase_price);
     });
 }
 
 impl Default for InitArgs {
     fn default() -> Self {
-        let default_record = Some(vec![Record { owner : Principal::anonymous(), registered_name : String::from("abc")}]);
         InitArgs {
             purchase_price: Some(Tokens::from_e8s(0)),
             transfer_price: Some(Tokens::from_e8s(0)),
-            records : default_record,
+            records : Some(HashSet::new()),
         }
         // treasury_account: Account {
         //     owner: Principal::anonymous(), 
